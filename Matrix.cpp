@@ -1,79 +1,94 @@
-/*
- * Matrix.cpp
- *
- *  Created on: Aug 31, 2013
- *      Author: muzhig
- */
-
 #include "Matrix.h"
 #include <math.h>
 
-Matrix::Matrix(int m, int n) {
-	// TODO Auto-generated constructor stub
+Matrix::Matrix(int m, int n, double* data) {
+	transposed = false;
 	this->m = m;
 	this->n = n;
-	data = new double[m * n];
-	for (int i=0; i<m * n; i++)
-		data[i] = 0.0;
+	if (data) {
+		this->data = data;
+		external_data = true;
+	} else {
+		this->data = new double[m * n];
+		external_data = false;
+		for (int i=0; i<m * n; i++) {
+			this->data[i] = 0.0;
+		}
+	}
 }
 
 Matrix::Matrix(const Matrix &rhs) {
+	transposed = rhs.transposed;
 	m = rhs.m;
 	n = rhs.n;
 	data = new double[m * n];
+	external_data = false;
 	for (int i=0; i<m * n; i++)
 		data[i] = rhs.data[i];
 }
 
 Matrix::~Matrix() {
-	delete[] data;
+	if (!external_data) {
+		delete[] data;
+	}
 }
 
 Matrix& Matrix::operator=(const Matrix &rhs) {
 	if (this != &rhs) {
+		if (m * n != rhs.m * rhs.n) {
+			if(!external_data) {
+				delete[] data;
+			}
+			data = new double[rhs.m * rhs.n];
+			if (external_data)
+				external_data = false;
+		}
 		m = rhs.m;
 		n = rhs.n;
-		delete[] data;
-		data = new double[m * n];
-		for (int i=0; i<m * n; i++)
+		transposed = rhs.transposed;
+		for (int i=0; i < m*n; i++)
 			data[i] = rhs.data[i];
 	}
 
 	return *this;
 }
 
-const Matrix& Matrix::operator+=(const Matrix &rhs) {
+Matrix& Matrix::operator+=(const Matrix &rhs) {
 	for (int i=0; i<m; i++)
-		data[i] += rhs.data[i];
+		for (int j=0; j<n; j++)
+			set(i, j) += rhs.get(i, j);
 	return *this;
 }
 
-const Matrix& Matrix::operator-=(const Matrix &rhs) {
+Matrix& Matrix::operator-=(const Matrix &rhs) {
 	for (int i=0; i<m; i++)
-		data[i] -= rhs.data[i];
+		for (int j=0; j<n; j++)
+			set(i, j) -= rhs.get(i, j);
 	return *this;
 }
 
-const Matrix& Matrix::operator*=(double scalar){
-	for (int i=0; i<m * n; i++)
-		data[i] *= scalar;
+Matrix& Matrix::operator*=(const Matrix &b){
+	Matrix& a = *this;
+	if (a.n == b.m) {
+		if (b.n == a.n) { // very memory-effective. using only n extra floats.
+			double row[a.n];
+			for (int i=0; i<a.m; i++) {
+				for (int jj=0; jj<a.n; jj++) {
+					row[jj] = a.get(i, jj);
+					a(i, jj) = 0.0;
+				}
+				for (int j=0; j<b.n; j++)
+					for (int k=0; k < a.n; k++)
+						a(i, j) += row[k] * b.get(k, j);
+			}
+		} else {
+			*this = a * b;
+		}
+	}
 	return *this;
 }
 
-const Matrix Matrix::operator+(const Matrix &rhs) const {
-	return Matrix(*this) += rhs;
-};
-
-const Matrix Matrix::operator-(const Matrix &rhs) const {
-	return Matrix(*this) -= rhs;
-}
-const Matrix Matrix::operator-() const {
-	return Matrix(*this) *= -1.0;
-}
-const Matrix Matrix::operator~() {
-	return this->inverse(false);
-}
-const Matrix Matrix::operator*(const Matrix &other) const {
+Matrix Matrix::operator*(const Matrix &other) const {
 	if (n != other.m) {
 		return Matrix(0, 0);
 	}
@@ -81,37 +96,81 @@ const Matrix Matrix::operator*(const Matrix &other) const {
 	for (int i=0; i<m; i++)
 		for (int j=0; j<other.n; j++)
 			for (int k=0; k < n; k++)
-				result.data[i * m + j] += data[i * m + k] * other.data[k * n + j];
+				result(i, j) += get(i, k) * other.get(k, j);
 	return result;
 }
 
-const Matrix Matrix::operator*(double scalar) const {
+Matrix& Matrix::operator*=(double scalar){
+	for (int i=0; i<m * n; i++)
+		data[i] *= scalar;
+	return *this;
+}
+
+
+
+Matrix Matrix::operator+(const Matrix &rhs) const{
+	return Matrix(*this) += rhs;
+};
+
+Matrix Matrix::operator-(const Matrix &rhs) const{
+	return Matrix(*this) -= rhs;
+}
+Matrix Matrix::operator-() const{
+	return Matrix(*this) *= -1.0;
+}
+Matrix Matrix::operator~() const{
+	Matrix result(*this);
+	result.inverse();
+	return result;
+}
+
+
+Matrix Matrix::operator*(double scalar) const {
 	return Matrix(*this) *= scalar;
 }
 
-bool  Matrix::operator==(const Matrix &other) {
+double& Matrix::operator()(int i, int j){
+	return set(i, j);
+}
+
+const double& Matrix::get(int i, int j) const{
+	return data[index(i, j)];
+}
+
+double& Matrix::set(int i, int j, double v) {
+	data[index(i, j)] = v;
+	return data[index(i, j)];
+}
+int Matrix::index(int i, int j) const{
+	if (transposed)
+		return j * m + i;
+	else
+		return i * n + j;
+}
+
+
+bool  Matrix::operator==(const Matrix &other) const{
 	if (m != other.m || n != other.n)
 		return false;
 
-	for (int i=0; i<m * n; i++)
-		if (data[i] != other.data[i])
-			return false;
+	for (int i=0; i<m; i++)
+		for (int j=0; j<n; j++)
+			if (get(i, j) != other.get(i,j))
+				return false;
 	return true;
 }
 
-bool  Matrix::operator!=(const Matrix &other) {
+bool  Matrix::operator!=(const Matrix &other) const{
 	return !(*this == other);
 }
 
-const Matrix Matrix::transpose() {
-	Matrix result(n, m);
-	for (int i=0; i<m; i++)
-		for (int j=0; j<n; j++)
-			result.data[j * n + i] = data[i * m + j];
-	return result;
+
+void Matrix::transpose() { // extremely optimal
+	int tmp = n; n = m; m = tmp;
+	transposed = !transposed;
 }
 
-const Matrix Matrix::inverse(bool selfmodify) {
+void Matrix::inverse() {
 	// A = input matrix AND result matrix
 	// n = number of rows = number of columns in A (n x n)
 	int pivrow;     // keeps track of current pivot row
@@ -119,9 +178,6 @@ const Matrix Matrix::inverse(bool selfmodify) {
 	int pivrows[n]; // keeps track of rows swaps to undo at end
 	double tmp;      // used for finding max value and making column swaps
 	Matrix& result = *this;
-	if (!selfmodify) {
-		result = Matrix(*this);
-	}
 
 	for (k = 0; k < n; k++)
 	{
@@ -129,18 +185,18 @@ const Matrix Matrix::inverse(bool selfmodify) {
 		tmp = 0;
 		for (i = k; i < n; i++)
 		{
-			if (fabs(result.data[i*n+k]) >= tmp)
+			if (fabs(result.get(i, k)) >= tmp)
 			{
-				tmp = fabs(result.data[i*n+k]);
+				tmp = fabs(result.get(i, k));
 				pivrow = i;
 			}
 		}
 
 		// check for singular matrix
-		if (result.data[pivrow*n+k] == 0.0f)
+		if (result.get(pivrow, k) == 0.0f)
 		{
 			// singular matrix
-			return Matrix(0, 0);
+			return;
 		}
 
 		// Execute pivot (row swap) if needed
@@ -149,20 +205,20 @@ const Matrix Matrix::inverse(bool selfmodify) {
 			// swap row k with pivrow
 			for (j = 0; j < n; j++)
 			{
-				tmp = result.data[k*n+j];
-				result.data[k*n+j] = result.data[pivrow*n+j];
-				result.data[pivrow*n+j] = tmp;
+				tmp = result.get(k, j);
+				result.set(k,j, result.get(pivrow, j));
+				result.set(pivrow, j) = tmp;
 			}
 		}
 		pivrows[k] = pivrow;    // record row swap (even if no swap happened)
 
-		tmp = 1.0f/result.data[k*n+k];    // invert pivot element
-		result.data[k*n+k] = 1.0f;        // This element of input matrix becomes result matrix
+		tmp = 1.0f/result.get(k, k);    // invert pivot element
+		result.set(k, k, 1.0f);        // This element of input matrix becomes result matrix
 
 		// Perform row reduction (divide every element by pivot)
 		for (j = 0; j < n; j++)
 		{
-			result.data[k*n+j] = result.data[k*n+j]*tmp;
+			result.set(k,j) *= tmp;
 		}
 
 		// Now eliminate all other entries in this column
@@ -170,11 +226,11 @@ const Matrix Matrix::inverse(bool selfmodify) {
 		{
 			if (i != k)
 			{
-				tmp = result.data[i*n+k];
-				result.data[i*n+k] = 0.0f;  // The other place where in matrix becomes result mat
+				tmp = result.get(i,k);
+				result.set(i,k) = 0.0f;  // The other place where in matrix becomes result mat
 				for (j = 0; j < n; j++)
 				{
-					result.data[i*n+j] = result.data[i*n+j] - result.data[k*n+j]*tmp;
+					result.set(i, j) -= result.get(k,j)*tmp;
 				}
 			}
 		}
@@ -187,22 +243,18 @@ const Matrix Matrix::inverse(bool selfmodify) {
 		{
 			for (i = 0; i < n; i++)
 			{
-				tmp = result.data[i*n+k];
-				result.data[i*n+k] = result.data[i*n+pivrows[k]];
-				result.data[i*n+pivrows[k]] = tmp;
+				tmp = result.get(i, k);
+				result.set(i, k) = result.get(i, pivrows[k]);
+				result.set(i, pivrows[k]) = tmp;
 			}
 		}
 	}
-	return result;
 }
 
-const Matrix Matrix::determinant() {
-
-}
-double Matrix::trace() {
+double Matrix::trace() const {
 	double result = 0.0;
 	for (int i=0; i<m && i<n; i++) {
-		result += data[i*n + i];
+		result += get(i, i);
 	}
 	return result;
 }
