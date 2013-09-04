@@ -67,36 +67,49 @@ Matrix& Matrix::operator-=(const Matrix &rhs) {
 	return *this;
 }
 
-Matrix& Matrix::operator*=(const Matrix &b){
+Matrix& Matrix::dotself(const Matrix &b, bool left){
 	Matrix& a = *this;
-	if (a.n == b.m) {
-		if (b.n == a.n) { // very memory-effective. using only n extra floats.
-			double row[a.n];
+	
+	if (( left ? a.m : a.n ) == ( left ? b.n : b.m )) {
+		if (( left ? b.m : b.n ) == ( left ? a.m : a.n )) { // very memory-effective. using only n extra floats.
+			if (left) {
+				a.transpose();
+			}
+			double* row = new double[a.n];
+			
 			for (int i=0; i<a.m; i++) {
 				for (int jj=0; jj<a.n; jj++) {
 					row[jj] = a.get(i, jj);
 					a(i, jj) = 0.0;
 				}
-				for (int j=0; j<b.n; j++)
+				for (int j=0; j<( left ? b.m : b.n ); j++)
 					for (int k=0; k < a.n; k++)
-						a(i, j) += row[k] * b.get(k, j);
+						a(i, j) += row[k] * ( left ? b.get(j, k) : b.get(k, j));
+			}
+			delete[] row;
+			if (left) {
+				transpose();
 			}
 		} else {
-			*this = a * b;
+			*this = a.dot(b, left);
 		}
 	}
+	
 	return *this;
 }
 
-Matrix Matrix::operator*(const Matrix &other) const {
-	if (n != other.m) {
+Matrix Matrix::dot(const Matrix &other, bool left) const {
+	if ((left && m != other.n) || (!left && n != other.m)) {
 		return Matrix(0, 0);
 	}
-	Matrix result(m, other.n);
-	for (int i=0; i<m; i++)
-		for (int j=0; j<other.n; j++)
-			for (int k=0; k < n; k++)
-				result(i, j) += get(i, k) * other.get(k, j);
+	Matrix result(left ? n : m, left ? other.m : other.n);
+	for (int i=0; i < (left ? n : m); i++)
+		for (int j=0; j < (left ? other.m : other.n); j++)
+			for (int k=0; k < (left ? m : n); k++)
+				result(i, j) += (left ? get(k, i) : get(i, k)) * (left ? other.get(j, k) : other.get(k, j));
+	if(left) {
+		result.transpose();
+	}
 	return result;
 }
 
@@ -137,8 +150,7 @@ const double& Matrix::get(int i, int j) const{
 	return data[index(i, j)];
 }
 
-double& Matrix::set(int i, int j, double v) {
-	data[index(i, j)] = v;
+double& Matrix::set(int i, int j) {
 	return data[index(i, j)];
 }
 int Matrix::index(int i, int j) const{
@@ -175,7 +187,7 @@ void Matrix::inverse() {
 	// n = number of rows = number of columns in A (n x n)
 	int pivrow;     // keeps track of current pivot row
 	int k,i,j;      // k: overall index along diagonal; i: row index; j: col index
-	int pivrows[n]; // keeps track of rows swaps to undo at end
+	int* pivrows = new int[n]; // keeps track of rows swaps to undo at end
 	double tmp;      // used for finding max value and making column swaps
 	Matrix& result = *this;
 
@@ -206,14 +218,14 @@ void Matrix::inverse() {
 			for (j = 0; j < n; j++)
 			{
 				tmp = result.get(k, j);
-				result.set(k,j, result.get(pivrow, j));
+				result.set(k,j) = result.get(pivrow, j);
 				result.set(pivrow, j) = tmp;
 			}
 		}
 		pivrows[k] = pivrow;    // record row swap (even if no swap happened)
 
 		tmp = 1.0f/result.get(k, k);    // invert pivot element
-		result.set(k, k, 1.0f);        // This element of input matrix becomes result matrix
+		result.set(k, k) = 1.0f;        // This element of input matrix becomes result matrix
 
 		// Perform row reduction (divide every element by pivot)
 		for (j = 0; j < n; j++)
@@ -249,6 +261,7 @@ void Matrix::inverse() {
 			}
 		}
 	}
+	delete[] pivrows;
 }
 
 double Matrix::trace() const {

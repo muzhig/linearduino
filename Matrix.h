@@ -10,19 +10,20 @@ public:
 	Matrix& operator=(const Matrix &rhs);
 	Matrix& operator+=(const Matrix &rhs);
 	Matrix& operator-=(const Matrix &rhs);
-	Matrix& operator*=(const Matrix &rhs);
+	Matrix& dotself(const Matrix &rhs, bool left=false);
+	Matrix  dot(const Matrix &rhs, bool left=false) const;
 	Matrix& operator*=(double scalar);
 
 	Matrix operator+(const Matrix &rhs) const;
 	Matrix operator-(const Matrix &rhs) const;
 	Matrix operator-() const;
 	Matrix operator~() const; // inverse
-	Matrix operator*(const Matrix &rhs) const;
+	//Matrix operator*(const Matrix &rhs) const;
 	Matrix operator*(double scalar) const;
 	double& operator()(int i, int j);
 
 	const double& get(int i, int j) const;
-	double& set(int i, int j, double v=0.0);
+	double& set(int i, int j);
 	int index(int i, int j) const;
 
 	bool  operator==(const Matrix &other) const;
