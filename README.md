@@ -6,11 +6,11 @@ Implemented operations:
 
 * addition/subtraction
 * scalar multiplication
-* elementwise addition
+* elementwise multiplication
 * dot product
 * cross product (for 3D row-vectors)
-* transpose
-* inverse
+* transposion
+* inversion
 * normalization 
 
 
