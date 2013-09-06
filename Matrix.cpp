@@ -1,21 +1,26 @@
 #include "Matrix.h"
 #include <math.h>
 
-Matrix::Matrix(int m, int n, double* data) {
-	transposed = false;
+Matrix::Matrix(int m, int n, double* data, bool transposed) {
+	this->transposed = transposed;
 	this->m = m;
 	this->n = n;
 	if (data) {
 		this->data = data;
 		external_data = true;
 	} else {
-		this->data = new double[m * n];
+		if (m && n)
+			this->data = new double[m * n];
+		else
+			this->data = 0;
 		external_data = false;
 		for (int i=0; i<m * n; i++) {
 			this->data[i] = 0.0;
 		}
 	}
 }
+
+
 
 Matrix::Matrix(const Matrix &rhs) {
 	transposed = rhs.transposed;
@@ -67,16 +72,28 @@ Matrix& Matrix::operator-=(const Matrix &rhs) {
 	return *this;
 }
 
-Matrix& Matrix::dotself(const Matrix &b, bool left){
+Matrix& Matrix::multiplySelf(const Matrix &rhs) {
+	// element-wise multiplication with self-modification
+	for (int i=0; i<m; i++)
+		for (int j=0; j<n; j++)
+			set(i, j) *= rhs.get(i, j);
+	return *this;
+}
+Matrix Matrix::multiply(const Matrix &rhs) const{
+	// element-wise multiplication
+	return Matrix(*this).multiplySelf(rhs);
+}
+
+Matrix& Matrix::dotSelf(const Matrix &b, bool left){
 	Matrix& a = *this;
-	
+
 	if (( left ? a.m : a.n ) == ( left ? b.n : b.m )) {
 		if (( left ? b.m : b.n ) == ( left ? a.m : a.n )) { // very memory-effective. using only n extra floats.
 			if (left) {
 				a.transpose();
 			}
 			double* row = new double[a.n];
-			
+
 			for (int i=0; i<a.m; i++) {
 				for (int jj=0; jj<a.n; jj++) {
 					row[jj] = a.get(i, jj);
@@ -94,7 +111,7 @@ Matrix& Matrix::dotself(const Matrix &b, bool left){
 			*this = a.dot(b, left);
 		}
 	}
-	
+
 	return *this;
 }
 
@@ -177,12 +194,11 @@ bool  Matrix::operator!=(const Matrix &other) const{
 }
 
 
-void Matrix::transpose() { // extremely optimal
-	int tmp = n; n = m; m = tmp;
-	transposed = !transposed;
+Matrix Matrix::transpose() const{ // extremely optimal
+	return Matrix(n,m,data,!transposed);
 }
 
-void Matrix::inverse() {
+Matrix& Matrix::inverse() {
 	// A = input matrix AND result matrix
 	// n = number of rows = number of columns in A (n x n)
 	int pivrow;     // keeps track of current pivot row
@@ -208,7 +224,7 @@ void Matrix::inverse() {
 		if (result.get(pivrow, k) == 0.0f)
 		{
 			// singular matrix
-			return;
+			return *this;
 		}
 
 		// Execute pivot (row swap) if needed
@@ -246,6 +262,7 @@ void Matrix::inverse() {
 				}
 			}
 		}
+
 	}
 
 	// Done, now need to undo pivot row swaps by doing column swaps in reverse order
@@ -262,6 +279,7 @@ void Matrix::inverse() {
 		}
 	}
 	delete[] pivrows;
+	return *this;
 }
 
 double Matrix::trace() const {
@@ -272,3 +290,58 @@ double Matrix::trace() const {
 	return result;
 }
 
+Matrix Matrix::cross(const Matrix& rhs, bool left) const {
+	if (m!=1 || rhs.m!=1 || n!=3 || rhs.n!=3) // for row vectors only
+		return Matrix(); //empty
+	const Matrix& u = left ? rhs : *this;
+	const Matrix& v = left ? *this : rhs;
+
+	Matrix result(1,3);
+	result(0,0) = u.get(0,1) * v.get(0,2) - u.get(0,2) * v.get(0,1);
+	result(0,1) = u.get(0,2) * v.get(0,0) - u.get(0,0) * v.get(0,2);
+	result(0,2) = u.get(0,0) * v.get(0,1) - u.get(0,1) * v.get(0,0);
+	return result;
+}
+
+Matrix& Matrix::normalize() {
+	double k = 1 / norm();
+	*this *= k;
+	return *this;
+}
+
+double Matrix::norm() const {
+	double result = 0.0;
+	for (int i=0; i<m; i++)
+		for (int j=0; j<n; j++)
+			result += get(i, j)*get(i, j);
+	result = sqrt(result);
+	return result;
+}
+
+double Matrix::sum() const {
+	double result = 0.0;
+	for (int i=0; i<m; i++)
+		for (int j=0; j<n; j++)
+			result += get(i, j);
+	return result;
+}
+
+Matrix Matrix::identity(int m) {
+	Matrix result(m,m);
+	for(int i=0; i<m; i++) {
+		result(i,i) = 1.0;
+	}
+	return result;
+}
+
+void Matrix::release() {
+	if(m && n) {
+		m = 0;
+		n = 0;
+		if (!external_data) {
+			delete[] data;
+			data = 0;
+		}
+
+	}
+}
