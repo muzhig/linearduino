@@ -342,3 +342,14 @@ void Matrix::release() {
 
 	}
 }
+
+Matrix Matrix::submatrix(int row_top, int col_left, int row_bottom, int col_right) {
+	int rows = row_bottom-row_top+1;
+	int cols = col_right-col_left+1;
+	Matrix result(rows, cols);
+
+	for(int i=0;i<rows; i++)
+		for(int j=0; j<cols; j++)
+			result(i,j) = get(row_top+i, col_left+j);
+	return result;
+}

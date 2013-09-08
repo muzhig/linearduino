@@ -191,6 +191,25 @@ void test_inverse() {
 	}
 }
 
+void test_submatrix() {
+	double m_[] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
+	Matrix m = Matrix(4, 4, m_);
+
+	Matrix r = m.submatrix(1,1,2,2);;
+
+	double rv_[] = {6,7,10,11};
+	Matrix rv = Matrix(2, 2, rv_);
+
+	std::cout << "test_submatrix: ";
+	if (r == rv)
+		std::cout  << "ok\n";
+	else {
+		std::cout  << "failed\n";
+		mprint(r);
+		mprint(rv);
+	}
+}
+
 int main()
 {
 	test_dot1();
@@ -201,7 +220,7 @@ int main()
 	test_subtract1();
 	test_mul1();
 	test_inverse();
-	int b;
-	std::cin >> b;
+	test_submatrix();
+
 	return 0;
 }

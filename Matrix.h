@@ -25,6 +25,7 @@ public:
 	Matrix operator-() const;
 	Matrix operator~() const; // inverse
 	Matrix operator*(double scalar) const;
+	Matrix submatrix(int row_top, int col_left, int row_bottom, int col_right);
 	double& operator()(int i, int j=0);
 
 	const double& get(int i, int j) const;
