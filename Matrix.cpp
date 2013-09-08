@@ -199,87 +199,84 @@ Matrix Matrix::transpose() const{ // extremely optimal
 }
 
 Matrix& Matrix::inverse() {
-	// A = input matrix AND result matrix
-	// n = number of rows = number of columns in A (n x n)
-	int pivrow;     // keeps track of current pivot row
-	int k,i,j;      // k: overall index along diagonal; i: row index; j: col index
-	int* pivrows = new int[n]; // keeps track of rows swaps to undo at end
-	double tmp;      // used for finding max value and making column swaps
-	Matrix& result = *this;
+    int pivrow;     // keeps track of current pivot row
+    int k,i,j;      // k: overall index along diagonal; i: row index; j: col index
+    int* pivrows = new int[n]; // keeps track of rows swaps to undo at end
+    double tmp;      // used for finding max value and making column swaps
 
-	for (k = 0; k < n; k++)
-	{
-		// find pivot row, the row with biggest entry in current column
-		tmp = 0;
-		for (i = k; i < n; i++)
-		{
-			if (fabs(result.get(i, k)) >= tmp)
-			{
-				tmp = fabs(result.get(i, k));
-				pivrow = i;
-			}
-		}
+    for (k = 0; k < n; k++)
+    {
+        // find pivot row, the row with biggest entry in current column
+        tmp = 0;
+        for (i = k; i < n; i++)
+        {
+            if (fabs(get(i,k)) >= tmp)   // 'Avoid using other functions inside abs()?'
+            {
+                tmp = fabs(get(i,k));
+                pivrow = i;
+            }
+        }
 
-		// check for singular matrix
-		if (result.get(pivrow, k) == 0.0f)
-		{
-			// singular matrix
-			return *this;
-		}
+        // check for singular matrix
+        if (get(pivrow,k) == 0.0)
+        {
+        	delete[] pivrows;
+        	*this = Matrix(0,0);
+            return *this;
+        }
 
-		// Execute pivot (row swap) if needed
-		if (pivrow != k)
-		{
-			// swap row k with pivrow
-			for (j = 0; j < n; j++)
-			{
-				tmp = result.get(k, j);
-				result.set(k,j) = result.get(pivrow, j);
-				result.set(pivrow, j) = tmp;
-			}
-		}
-		pivrows[k] = pivrow;    // record row swap (even if no swap happened)
+        // Execute pivot (row swap) if needed
+        if (pivrow != k)
+        {
+            // swap row k with pivrow
+            for (j = 0; j < n; j++)
+            {
+                tmp = get(k, j);
+                set(k, j) = get(pivrow,j);
+                set(pivrow, j) = tmp;
+            }
+        }
+        pivrows[k] = pivrow;    // record row swap (even if no swap happened)
 
-		tmp = 1.0f/result.get(k, k);    // invert pivot element
-		result.set(k, k) = 1.0f;        // This element of input matrix becomes result matrix
+        tmp = 1.0/get(k,k);    // invert pivot element
+        set(k,k) = 1.0;        // This element of input matrix becomes result matrix
 
-		// Perform row reduction (divide every element by pivot)
-		for (j = 0; j < n; j++)
-		{
-			result.set(k,j) *= tmp;
-		}
+        // Perform row reduction (divide every element by pivot)
+        for (j = 0; j < n; j++)
+        {
+            set(k,j) *= tmp;
+        }
 
-		// Now eliminate all other entries in this column
-		for (i = 0; i < n; i++)
-		{
-			if (i != k)
-			{
-				tmp = result.get(i,k);
-				result.set(i,k) = 0.0f;  // The other place where in matrix becomes result mat
-				for (j = 0; j < n; j++)
-				{
-					result.set(i, j) -= result.get(k,j)*tmp;
-				}
-			}
-		}
+        // Now eliminate all other entries in this column
+        for (i = 0; i < n; i++)
+        {
+            if (i != k)
+            {
+                tmp = get(i,k);
+                set(i,k) = 0.0;  // The other place where in matrix becomes result mat
+                for (j = 0; j < n; j++)
+                {
+                    set(i,j) -= get(k,j) * tmp;
+                }
+            }
+        }
+    }
 
-	}
-
-	// Done, now need to undo pivot row swaps by doing column swaps in reverse order
-	for (k = n-1; k >= 0; k--)
-	{
-		if (pivrows[k] != k)
-		{
-			for (i = 0; i < n; i++)
-			{
-				tmp = result.get(i, k);
-				result.set(i, k) = result.get(i, pivrows[k]);
-				result.set(i, pivrows[k]) = tmp;
-			}
-		}
-	}
-	delete[] pivrows;
-	return *this;
+    // Done, now need to undo pivot row swaps by doing column swaps in reverse order
+    for (k = n-1; k >= 0; k--)
+    {
+        if (pivrows[k] != k)
+        {
+            for (i = 0; i < n; i++)
+            {
+                tmp = get(i,k);
+                set(i, k) = get(i,pivrows[k]);
+                set(i,pivrows[k]) = tmp;
+            }
+        }
+    }
+    delete[] pivrows;
+    return *this;
 }
 
 double Matrix::trace() const {
