@@ -62,6 +62,46 @@ void test_dot1() {
 
 }
 
+
+void test_transpose() {
+	double m_[] = {1,2,3,4,5,6,7,8,9};
+	Matrix m = Matrix(3, 3, m_);
+	m.transpose();
+
+
+	double rv_[] = {1,4,7,2,5,8,3,6,9};
+	Matrix rv = Matrix(3, 3, rv_);
+
+	std::cout << "test_transpose: ";
+	if (m == rv)
+		std::cout  << "ok\n";
+	else {
+		std::cout  << "failed\n";
+		mprint(m);
+		mprint(rv);
+	}
+
+}
+
+void test_trace() {
+	double m_[] = {1,2,3,4,5,6,7,8,9};
+	Matrix m = Matrix(3, 3, m_);
+
+	double r = m.trace();
+
+	double rv = 1 + 5 + 9;
+
+	std::cout << "test_trace: ";
+	if (r == rv)
+		std::cout  << "ok\n";
+	else {
+		std::cout  << "failed\n";
+		mprint(r);
+		mprint(rv);
+	}
+
+}
+
 void test_dot2() {
 	double m_[] = {1,2,3,4,5,6,7,8,9};
 	Matrix m = Matrix(3, 3, m_);
@@ -242,6 +282,7 @@ int main()
 	test_mul1();
 	test_inverse();
 	test_submatrix();
-
+	test_trace();
+	test_transpose();
 	return 0;
 }
