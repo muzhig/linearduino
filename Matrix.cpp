@@ -2,7 +2,7 @@
 #include <math.h>
 
 Matrix::Matrix(int m, int n, double* data, bool transposed) {
-	this->transposed = transposed;
+	this->isTransposed = transposed;
 	this->m = m;
 	this->n = n;
 	if (data) {
@@ -23,7 +23,7 @@ Matrix::Matrix(int m, int n, double* data, bool transposed) {
 
 
 Matrix::Matrix(const Matrix &rhs) {
-	transposed = rhs.transposed;
+	isTransposed = rhs.isTransposed;
 	m = rhs.m;
 	n = rhs.n;
 	data = new double[m * n];
@@ -50,7 +50,7 @@ Matrix& Matrix::operator=(const Matrix &rhs) {
 		}
 		m = rhs.m;
 		n = rhs.n;
-		transposed = rhs.transposed;
+		isTransposed = rhs.isTransposed;
 		for (int i=0; i < m*n; i++)
 			data[i] = rhs.data[i];
 	}
@@ -171,7 +171,7 @@ double& Matrix::set(int i, int j) {
 	return data[index(i, j)];
 }
 int Matrix::index(int i, int j) const{
-	if (transposed)
+	if (isTransposed)
 		return j * m + i;
 	else
 		return i * n + j;
@@ -194,8 +194,14 @@ bool  Matrix::operator!=(const Matrix &other) const{
 }
 
 
-Matrix Matrix::transpose() const{ // extremely optimal
-	return Matrix(n,m,data,!transposed);
+Matrix& Matrix::transpose() {
+	isTransposed = !isTransposed;
+	int tmp = m; m = n; n=tmp;
+	return *this;
+}
+
+Matrix Matrix::transposed() const { // extremely memory-optimal but be aware- data reference is copied! Do not use transposed after parent deletion.
+	return Matrix(n,m,data,!isTransposed);
 }
 
 Matrix& Matrix::inverse() {
@@ -351,5 +357,23 @@ Matrix Matrix::submatrix(int row_top, int col_left, int row_bottom, int col_righ
 	for(int i=0;i<rows; i++)
 		for(int j=0; j<cols; j++)
 			result(i,j) = get(row_top+i, col_left+j);
+	return result;
+}
+
+bool Matrix::closeEnough(const Matrix& another) {
+	if (another.m !=m || another.n != n) {
+		return false;
+	}
+	bool result = true;
+
+	for (int i=0; result && i<m; i++)
+	{
+		for(int j=0; j<n; j++){
+			if (fabs(get(i,j)-another.get(i,j)) > 1.0e-6) {
+				result = false;
+				break;
+			}
+		}
+	}
 	return result;
 }

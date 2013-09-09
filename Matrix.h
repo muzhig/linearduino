@@ -38,14 +38,16 @@ public:
 	Matrix&  inverse();
 	double trace() const;
 
-	Matrix transpose() const;
+	Matrix& transpose();
+	Matrix transposed() const;
 	void release();
+	bool closeEnough(const Matrix& another);
 
 	double* data;
 	int m;
 	int n;
 	bool external_data;
-	bool transposed;
+	bool isTransposed;
 };
 
 #endif /* MATRIX_H_ */

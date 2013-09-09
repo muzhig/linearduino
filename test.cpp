@@ -10,6 +10,35 @@ void mprint(const Matrix& r) {
 	}
 }
 
+void test_dotSelf1() {
+	double m_[] = {-679.0, -1282.0, -937.0, 1.0};
+	Matrix m = Matrix(4, 1, m_);
+
+	double GYRO_[] = {
+					3.05008235e-05,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00,
+					0.00000000e+00, -3.05008235e-05,  0.00000000e+00,  0.00000000e+00,
+					0.00000000e+00,  0.00000000e+00, -3.05008235e-05,  0.00000000e+00,
+					2.55507381e-02, -4.43037425e-02, -1.58011956e-02,  3.05008235e-05
+				};
+	Matrix G(4, 4, GYRO_, true);
+
+	Matrix& r = m.dotSelf(G, true);
+
+	double rv_[] = {0.00484068, -0.00520169, 0.0127781, 3.05008e-05};
+	Matrix rv = Matrix(4, 1, rv_);
+
+	std::cout << "test_dotSelf1: ";
+	if (r.closeEnough(rv))
+		std::cout  << "ok\n";
+	else {
+		std::cout  << "failed\n";
+		mprint(r);
+		mprint(rv);
+	}
+
+}
+
+
 void test_dot1() {
 	double m_[] = {1,2,3,4,5,6,7,8,9};
 	Matrix m = Matrix(3, 3, m_);
@@ -172,17 +201,8 @@ void test_inverse() {
 	Matrix rv = Matrix::identity(3);
 
 	std::cout << "test_inverse: ";
-	bool close_enough = true;
-	for (int i=0;i<rv.n;i++)
-	{
-		for(int j=0; j<rv.n; j++){
-			if (fabs(rv(i,j)-r(i,j)) > 1.0e-10) {
-				close_enough = false;
-				break;
-			}
-		}
-	}
-	if (close_enough)
+
+	if (r.closeEnough(rv))
 		std::cout  << "ok\n";
 	else {
 		std::cout  << "failed\n";
@@ -215,6 +235,7 @@ int main()
 	test_dot1();
 	test_dot2();
 	test_dot3();
+	test_dotSelf1();
 	test_add1();
 	test_minus1();
 	test_subtract1();
