@@ -5,48 +5,38 @@ Matrix::Matrix(int m, int n, double* data, bool transposed) {
 	this->isTransposed = transposed;
 	this->m = m;
 	this->n = n;
+	this->data = 0;
 	if (data) {
 		this->data = data;
-		external_data = true;
+		externalData = true;
 	} else {
-		if (m && n)
-			this->data = new double[m * n];
-		else
-			this->data = 0;
-		external_data = false;
+		allocate();
 		for (int i=0; i<m * n; i++) {
 			this->data[i] = 0.0;
 		}
 	}
 }
 
-
-
 Matrix::Matrix(const Matrix &rhs) {
 	isTransposed = rhs.isTransposed;
 	m = rhs.m;
 	n = rhs.n;
-	data = new double[m * n];
-	external_data = false;
+	data = 0;
+	allocate();
 	for (int i=0; i<m * n; i++)
 		data[i] = rhs.data[i];
 }
 
 Matrix::~Matrix() {
-	if (!external_data) {
-		delete[] data;
-	}
+	release();
 }
 
 Matrix& Matrix::operator=(const Matrix &rhs) {
 	if (this != &rhs) {
 		if (m * n != rhs.m * rhs.n) {
-			if(!external_data) {
-				delete[] data;
-			}
-			data = new double[rhs.m * rhs.n];
-			if (external_data)
-				external_data = false;
+			m = rhs.m;
+			n = rhs.n;
+			allocate();
 		}
 		m = rhs.m;
 		n = rhs.n;
@@ -227,7 +217,7 @@ Matrix& Matrix::inverse() {
         if (get(pivrow,k) == 0.0)
         {
         	delete[] pivrows;
-        	*this = Matrix(0,0);
+        	this->release();
             return *this;
         }
 
@@ -338,15 +328,20 @@ Matrix Matrix::identity(int m) {
 }
 
 void Matrix::release() {
-	if(m && n) {
-		m = 0;
-		n = 0;
-		if (!external_data) {
-			delete[] data;
-			data = 0;
-		}
-
+	if (data && !externalData) {
+		delete[] data;
+		data = 0;
 	}
+}
+void Matrix::allocate() {
+	if (data) {
+		release();
+	}
+	if (m && n)
+		this->data = new double[m * n];
+	else
+		this->data = 0;
+	externalData = false;
 }
 
 Matrix Matrix::submatrix(int row_top, int col_left, int row_bottom, int col_right) {

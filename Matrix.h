@@ -41,12 +41,13 @@ public:
 	Matrix& transpose();
 	Matrix transposed() const;
 	void release();
+	void allocate();
 	bool closeEnough(const Matrix& another);
 
 	double* data;
 	int m;
 	int n;
-	bool external_data;
+	bool externalData;
 	bool isTransposed;
 };
 

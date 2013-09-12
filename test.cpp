@@ -270,6 +270,48 @@ void test_submatrix() {
 	}
 }
 
+
+void test_heap1() {
+	double m_[] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
+	Matrix m = Matrix(4, 4, m_);
+	Matrix r;
+	r = m;
+
+
+
+	std::cout << "test_heap1: ";
+	if (r == m)
+		std::cout  << "ok\n";
+	else {
+		std::cout  << "failed\n";
+		mprint(r);
+		mprint(m);
+	}
+}
+
+void test_heap2() {
+	double m_[] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
+	Matrix m = Matrix(4, 4, m_);
+	{
+		Matrix r = m;
+		r.release();
+		r = m.submatrix(0,0,2,2);
+		m.release();
+		m = r;
+	}
+
+	double rv_[] = {1,2,3,5,6,7,9,10,11};
+	Matrix rv(3,3,rv_);
+	std::cout << "test_heap2: ";
+	if (rv == m)
+		std::cout  << "ok\n";
+	else {
+		std::cout  << "failed\n";
+		mprint(m);
+		mprint(rv);
+	}
+}
+
 int main()
 {
 	test_dot1();
@@ -284,5 +326,7 @@ int main()
 	test_submatrix();
 	test_trace();
 	test_transpose();
+	test_heap1();
+	test_heap2();
 	return 0;
 }
