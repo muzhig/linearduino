@@ -366,20 +366,14 @@ Matrix Matrix::quaternion_rotate(Matrix& Q) const {
 	
 	Matrix tmp = Q.quaternion_multiply(*this).quaternion_multiply(Q.quaternion_inverse());
 	
-	/*
-	def rotate_vector(v, q):
-		v = np.hstack(([0.0], v))
-		v = tr.quaternion_multiply(q, v)
-		q = tr.quaternion_inverse(q)
-		v = tr.quaternion_multiply(v, q)
-		return v[1:]
-	*/
 	return tmp.submatrix(0,1,0,3);
 }
 
 Matrix& Matrix::normalize() {
-	double k = 1 / norm();
-	*this *= k;
+	double k = norm();
+	if (k > 0) {
+		*this *= (1 / k);
+	}
 	return *this;
 }
 

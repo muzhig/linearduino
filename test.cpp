@@ -401,6 +401,62 @@ void test_quaternion_inverse() {
 	}
 }
 
+void test_quaternion_estimate() {
+	double A_[] = { 0.70710678,  0.0,          0.70710678};
+	double B_[] = { 0.0,         0.70710678,   0.70710678};
+	double A2_[] = {0, 1, 0};
+	double B2_[] = {0., 0.5, 0.8660254};
+	
+	Matrix A(1,3,A_);
+	Matrix B(1,3,B_);
+	Matrix A2(1,3,A2_);
+	Matrix B2(1,3,B2_);
+	A.normalize();
+	B.normalize();
+	A2.normalize();
+	B2.normalize();
+		
+	Matrix N1 = A.cross(B);
+	N1.normalize();
+
+	Matrix N2 = A2.cross(B2);
+	N2.normalize();
+	
+	double cosa = N1.dot(N2.transposed()).get(0,0);
+	double sina = sqrt(0.5 - 0.5*cosa);
+	cosa = sqrt(0.5 + 0.5*cosa);
+
+	Matrix NN = N1.cross(N2);
+	NN.normalize();
+	NN *= sina;
+	double Q1_[] = {cosa, NN(0,0), NN(0,1), NN(0,2)};
+	Matrix Q1(1,4,Q1_);
+	A = A.quaternion_rotate(Q1);
+	B = B.quaternion_rotate(Q1);
+	cosa = A.dot(A2.transposed()).get(0,0);
+	sina = sqrt(0.5 - 0.5*cosa);
+	cosa = sqrt(0.5 + 0.5*cosa);
+	N2 *= sina;
+	double Q2_[] = {cosa, N2(0,0), N2(0,1), N2(0,2)};
+	Matrix Q2(1, 4, Q2_);
+	
+	Matrix Q = Q2.quaternion_multiply(Q1);
+	
+	double rv_[] = {0.45576804,  0.060003,    0.5406251,   0.70455634};
+	
+	Matrix rv(1, 4, rv_);
+	std::cout << "test_quaternion_estimate: ";
+	if (rv.closeEnough(Q))
+		std::cout  << "ok\n";
+	else {
+		std::cout  << "failed\n";
+		mprint(Q);
+		mprint(rv);
+	}
+	
+}
+
+
 int main()
 {
 	test_dot1();
@@ -421,7 +477,7 @@ int main()
 	test_quaternion_inverse();
 	test_quaternion_rotate1();
 	test_quaternion_rotate2();
-	
+	test_quaternion_estimate();
 
 	return 0;
 }
