@@ -96,8 +96,8 @@ void test_trace() {
 		std::cout  << "ok\n";
 	else {
 		std::cout  << "failed\n";
-		mprint(r);
-		mprint(rv);
+		std::cout  << r << "\n" << "\n";
+
 	}
 
 }
@@ -271,6 +271,7 @@ void test_submatrix() {
 }
 
 
+
 void test_heap1() {
 	double m_[] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
 	Matrix m = Matrix(4, 4, m_);
@@ -311,6 +312,94 @@ void test_heap2() {
 		mprint(rv);
 	}
 }
+void test_q_multiply() {
+	double a_[] = {0.45576804,  0.060003,    0.5406251,   0.70455634};
+	Matrix a = Matrix(1, 4, a_);
+	double b_[] = {0.95832283,  0.65963177,  0.91978193,  0.79914949};
+	Matrix b = Matrix(1, 4, b_);
+	Matrix r = a.quaternion_multiply(b);
+	double rv_[] = {-0.66311,     0.1421434,   1.35409696,  0.73799541};
+	Matrix rv(1, 4, rv_);
+	
+	std::cout << "test_q_multiply: ";
+
+	if (r.closeEnough(rv))
+		std::cout  << "ok\n";
+	else {
+		std::cout  << "failed\n";
+		mprint(r);
+		mprint(rv);
+	}
+}
+
+void test_quaternion_rotate1() {
+	double A_[] = { 0.70710678,  0.0,          0.70710678};
+	double B_[] = { 0.0,         0.70710678,   0.70710678};
+	double A2_[] = {0, 1, 0};
+	double B2_[] = {0., 0.5, 0.8660254};
+	double Q_[] = {0.45576804,  0.060003,    0.5406251,   0.70455634};
+	Matrix A(1,3,A_);
+	Matrix B(1,3,B_);
+	Matrix A2(1,3,A2_);
+	Matrix B2(1,3,B2_);
+	Matrix Q(1,4,Q_);
+	
+	Matrix r = A.quaternion_rotate(Q);
+	
+	Matrix rv = A2;
+	std::cout << "test_quaternion_rotate1: ";
+	if (rv.closeEnough(r))
+		std::cout  << "ok\n";
+	else {
+		std::cout  << "failed\n";
+		mprint(r);
+		mprint(rv);
+	}
+}
+
+void test_quaternion_rotate2() {
+	double A_[] = { 0.70710678,  0.0,          0.70710678};
+	double B_[] = { 0.0,         0.70710678,   0.70710678};
+	double A2_[] = {0, 1, 0};
+	double B2_[] = {0., 0.5, 0.8660254};
+	double Q_[] = {0.45576804,  0.060003,    0.5406251,   0.70455634};
+	Matrix A(1,3,A_);
+	Matrix B(1,3,B_);
+	Matrix A2(1,3,A2_);
+	Matrix B2(1,3,B2_);
+	Matrix Q(1,4,Q_);
+	
+	Matrix r = B.quaternion_rotate(Q);
+	
+	Matrix rv = B2;
+	std::cout << "test_quaternion_rotate2: ";
+	if (rv.closeEnough(r))
+		std::cout  << "ok\n";
+	else {
+		std::cout  << "failed\n";
+		mprint(r);
+		mprint(rv);
+	}
+}
+
+void test_quaternion_inverse() {
+	double Q_[] = {0.6579081,   0.2558758,   0.62292432,  0.72851706};
+	Matrix Q(1,4,Q_);
+	
+	Matrix r = Q.quaternion_inverse();
+	
+	double rv_[] = {0.46426787, -0.1805646,  -0.43958076, -0.51409469};
+	
+	Matrix rv(1, 4, rv_);
+	std::cout << "test_quaternion_inverse: ";
+	if (rv.closeEnough(r))
+		std::cout  << "ok\n";
+	else {
+		std::cout  << "failed\n";
+		mprint(r);
+		mprint(rv);
+	}
+}
 
 int main()
 {
@@ -328,5 +417,11 @@ int main()
 	test_transpose();
 	test_heap1();
 	test_heap2();
+	test_q_multiply();
+	test_quaternion_inverse();
+	test_quaternion_rotate1();
+	test_quaternion_rotate2();
+	
+
 	return 0;
 }

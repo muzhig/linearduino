@@ -21,7 +21,7 @@ public:
 	Matrix  cross(const Matrix &rhs, bool left=false) const;
 	Matrix  quaternion_multiply(const Matrix &rhs, bool left=false) const;
 	Matrix quaternion_inverse() const;
-	Matrix& quaternion_rotate(Matrix& Q) ;
+	Matrix quaternion_rotate(Matrix& Q) const;
 	Matrix multiply(const Matrix &rhs) const;
 	Matrix operator+(const Matrix &rhs) const;
 	Matrix operator-(const Matrix &rhs) const;

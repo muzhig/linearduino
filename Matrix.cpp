@@ -299,8 +299,8 @@ Matrix Matrix::cross(const Matrix& rhs, bool left) const {
 Matrix Matrix::quaternion_multiply(const Matrix& rhs, bool left) const {
 	if (m!=1 || rhs.m!=1 || (n!=4 && n!=3) || (rhs.n!=4 && rhs.n!=3)) // for row vectors only
 		return Matrix(); //empty
-	const Matrix& u = left ? rhs : *this;
-	const Matrix& v = left ? *this : rhs;
+	const Matrix& v = left ? rhs : *this;
+	const Matrix& u = left ? *this : rhs;
 
 	double w0,x0,y0,z0;
 	if (u.n==4) {
@@ -359,13 +359,22 @@ Matrix Matrix::quaternion_inverse() const {
 	return result;
 }
 
-Matrix& Matrix::quaternion_rotate(Matrix& Q)  {
+Matrix Matrix::quaternion_rotate(Matrix& Q) const {
 	if (m!=1 || n!=3|| Q.m!=1 || Q.n!=4) // for row vectors only
-		release();
-		return *this; //empty
-	Matrix& v = *this;
-	v = Q.quaternion_multiply(v).quaternion_multiply(Q.quaternion_inverse());
-	return v;
+		return Matrix();
+		
+	
+	Matrix tmp = Q.quaternion_multiply(*this).quaternion_multiply(Q.quaternion_inverse());
+	
+	/*
+	def rotate_vector(v, q):
+		v = np.hstack(([0.0], v))
+		v = tr.quaternion_multiply(q, v)
+		q = tr.quaternion_inverse(q)
+		v = tr.quaternion_multiply(v, q)
+		return v[1:]
+	*/
+	return tmp.submatrix(0,1,0,3);
 }
 
 Matrix& Matrix::normalize() {
