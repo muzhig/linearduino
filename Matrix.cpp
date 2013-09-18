@@ -296,6 +296,78 @@ Matrix Matrix::cross(const Matrix& rhs, bool left) const {
 	return result;
 }
 
+Matrix Matrix::quaternion_multiply(const Matrix& rhs, bool left) const {
+	if (m!=1 || rhs.m!=1 || (n!=4 && n!=3) || (rhs.n!=4 && rhs.n!=3)) // for row vectors only
+		return Matrix(); //empty
+	const Matrix& u = left ? rhs : *this;
+	const Matrix& v = left ? *this : rhs;
+
+	double w0,x0,y0,z0;
+	if (u.n==4) {
+		w0 = u.get(0,0);
+		x0 = u.get(0,1);
+		y0 = u.get(0,2);
+		z0 = u.get(0,3);
+	} else {
+		w0 = 0;
+		x0 = u.get(0,0);
+		y0 = u.get(0,1);
+		z0 = u.get(0,2);
+	}
+
+	double w1,x1,y1,z1;
+	if (v.n==4) {
+		w1 = v.get(0,0);
+		x1 = v.get(0,1);
+		y1 = v.get(0,2);
+		z1 = v.get(0,3);
+	} else {
+		w1 = 0;
+		x1 = v.get(0,0);
+		y1 = v.get(0,1);
+		z1 = v.get(0,2);
+	}
+
+	double res_[4] = {
+		-x1*x0 - y1*y0 - z1*z0 + w1*w0,
+		 x1*w0 + y1*z0 - z1*y0 + w1*x0,
+		-x1*z0 + y1*w0 + z1*x0 + w1*y0,
+		 x1*y0 - y1*x0 + z1*w0 + w1*z0
+	};
+	Matrix result(1,4,res_);
+	return result;
+}
+
+Matrix Matrix::quaternion_inverse() const {
+	if (m!=1 || n!=4) // for row vectors only
+		return Matrix(); //empty
+
+	double w0 = get(0,0);
+	double x0 = get(0,1);
+	double y0 = get(0,2);
+	double z0 = get(0,3);
+
+	double sqr_norm_inv = 1.0/(w0*w0 + x0*x0 + y0*y0 + z0*z0);
+
+	double res_[4] = {
+		 w0 * sqr_norm_inv,
+		-x0 * sqr_norm_inv,
+		-y0 * sqr_norm_inv,
+		-z0 * sqr_norm_inv
+	};
+	Matrix result(1,4,res_);
+	return result;
+}
+
+Matrix& Matrix::quaternion_rotate(Matrix& Q)  {
+	if (m!=1 || n!=3|| Q.m!=1 || Q.n!=4) // for row vectors only
+		release();
+		return *this; //empty
+	Matrix& v = *this;
+	v = Q.quaternion_multiply(v).quaternion_multiply(Q.quaternion_inverse());
+	return v;
+}
+
 Matrix& Matrix::normalize() {
 	double k = 1 / norm();
 	*this *= k;
