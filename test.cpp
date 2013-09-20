@@ -416,31 +416,7 @@ void test_quaternion_estimate() {
 	A2.normalize();
 	B2.normalize();
 		
-	Matrix N1 = A.cross(B);
-	N1.normalize();
-
-	Matrix N2 = A2.cross(B2);
-	N2.normalize();
-	
-	double cosa = N1.dot(N2.transposed()).get(0,0);
-	double sina = sqrt(0.5 - 0.5*cosa);
-	cosa = sqrt(0.5 + 0.5*cosa);
-
-	Matrix NN = N1.cross(N2);
-	NN.normalize();
-	NN *= sina;
-	double Q1_[] = {cosa, NN(0,0), NN(0,1), NN(0,2)};
-	Matrix Q1(1,4,Q1_);
-	A = A.quaternion_rotate(Q1);
-	B = B.quaternion_rotate(Q1);
-	cosa = A.dot(A2.transposed()).get(0,0);
-	sina = sqrt(0.5 - 0.5*cosa);
-	cosa = sqrt(0.5 + 0.5*cosa);
-	N2 *= sina;
-	double Q2_[] = {cosa, N2(0,0), N2(0,1), N2(0,2)};
-	Matrix Q2(1, 4, Q2_);
-	
-	Matrix Q = Q2.quaternion_multiply(Q1);
+	Matrix Q = Matrix::estimate_quaternion(A, B, A2, B2);
 	
 	double rv_[] = {0.45576804,  0.060003,    0.5406251,   0.70455634};
 	
@@ -456,6 +432,65 @@ void test_quaternion_estimate() {
 	
 }
 
+void test_quaternion_estimate2() {
+	double mref_[] = { 0.358, 0, 0.932};
+	Matrix mref(1,3,mref_);
+	Matrix mref_copy = mref;
+	double aref_[] = { 0, 0, -1};
+	Matrix aref(1,3,aref_);
+	Matrix aref_copy = aref;
+
+	double m_[] = { 0.9121045470237732, 0.01640194095671177, 0.40962934494018555};
+	Matrix m(1,3,m_);
+
+	double a_[] = {-0.6936589479446411, -0.008127706125378609, -0.7202576398849487};
+	Matrix a(1,3,a_);
+
+	Matrix Q = Matrix::estimate_quaternion(mref, aref, m, a);
+	mprint(Q);
+
+
+	mprint(mref_copy.quaternion_rotate(Q));
+	mprint(aref_copy.quaternion_rotate(Q));
+
+	std::cout << "test_quaternion_estimate2: ";
+	if (mref_copy.quaternion_rotate(Q).closeEnough(m) && aref_copy.quaternion_rotate(Q).closeEnough(a))
+		std::cout  << "ok\n";
+	else {
+		std::cout  << "failed\n";
+	}
+
+}
+
+void test_quaternion_estimate3() {
+	double mref_[] = { 0.358, 0, 0.950};
+	Matrix mref(1,3,mref_);
+	Matrix mref_copy = mref;
+	double aref_[] = { 0, 0, -1};
+	Matrix aref(1,3,aref_);
+	Matrix aref_copy = aref;
+
+	double m_[] = { 0.3013550341129303, -0.9231047630310059, -0.2388782501220703};
+	Matrix m(1,3,m_);
+
+	double a_[] = {0.004691578447818756, 0.9992414116859436, -0.038659464567899704};
+	Matrix a(1,3,a_);
+
+	Matrix Q = Matrix::estimate_quaternion(mref, aref, m, a);
+	mprint(Q);
+
+
+	mprint(mref_copy.quaternion_rotate(Q));
+	mprint(aref_copy.quaternion_rotate(Q));
+
+	std::cout << "test_quaternion_estimate3: ";
+	if (mref_copy.quaternion_rotate(Q).closeEnough(m) && aref_copy.quaternion_rotate(Q).closeEnough(a))
+		std::cout  << "ok\n";
+	else {
+		std::cout  << "failed\n";
+	}
+
+}
 
 int main()
 {
@@ -478,6 +513,7 @@ int main()
 	test_quaternion_rotate1();
 	test_quaternion_rotate2();
 	test_quaternion_estimate();
-
+	test_quaternion_estimate2();
+	test_quaternion_estimate3();
 	return 0;
 }

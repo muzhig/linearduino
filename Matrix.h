@@ -7,6 +7,7 @@ public:
 	Matrix(const Matrix &rhs);
 	virtual ~Matrix();
 	static Matrix identity(int m);
+	static Matrix estimate_quaternion(Matrix& A, Matrix& B, Matrix& A2, Matrix& B2);
 	Matrix& operator=(const Matrix &rhs);
 	Matrix& operator+=(const Matrix &rhs);
 	Matrix& operator-=(const Matrix &rhs);
@@ -28,7 +29,7 @@ public:
 	Matrix operator-() const;
 	Matrix operator~() const; // inverse
 	Matrix operator*(double scalar) const;
-	Matrix submatrix(int row_top, int col_left, int row_bottom, int col_right);
+	Matrix submatrix(int row_top, int col_left, int row_bottom, int col_right) const;
 	double& operator()(int i, int j=0);
 
 	const double& get(int i, int j) const;

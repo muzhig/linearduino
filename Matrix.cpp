@@ -419,7 +419,7 @@ void Matrix::allocate() {
 	externalData = false;
 }
 
-Matrix Matrix::submatrix(int row_top, int col_left, int row_bottom, int col_right) {
+Matrix Matrix::submatrix(int row_top, int col_left, int row_bottom, int col_right) const {
 	int rows = row_bottom-row_top+1;
 	int cols = col_right-col_left+1;
 	Matrix result(rows, cols);
@@ -446,4 +446,36 @@ bool Matrix::closeEnough(const Matrix& another) {
 		}
 	}
 	return result;
+}
+
+Matrix Matrix::estimate_quaternion(Matrix& A, Matrix& B, Matrix& A2, Matrix& B2) {
+	Matrix N1 = A.cross(B);
+	N1.normalize();
+
+	Matrix N2 = A2.cross(B2);
+	N2.normalize();
+
+	double cosa = N1.dot(N2.transposed()).get(0,0);
+	double sina = sqrt(0.5 - 0.5*cosa);
+	cosa = sqrt(0.5 + 0.5*cosa);
+
+	Matrix NN = N1.cross(N2);
+	NN.normalize();
+	NN *= sina;
+	double Q1_[] = {cosa, NN(0,0), NN(0,1), NN(0,2)};
+	Matrix Q1(1,4,Q1_);
+	A = A.quaternion_rotate(Q1);
+	B = B.quaternion_rotate(Q1);
+	cosa = A.dot(A2.transposed()).get(0,0);
+	sina = sqrt(0.5 - 0.5*cosa);
+	cosa = sqrt(0.5 + 0.5*cosa);
+	Matrix ax2 = A.cross(A2);
+	ax2.normalize();
+	ax2 *= sina;
+	double Q2_[] = {cosa, ax2(0,0), ax2(0,1), ax2(0,2)};
+	Matrix Q2(1, 4, Q2_);
+
+	Matrix Q = Q2.quaternion_multiply(Q1);
+
+	return Q;
 }
