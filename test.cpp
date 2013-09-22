@@ -128,9 +128,11 @@ void test_dot3() {
 	double m_[] = {1,2,3,4,5,6,7,8,9};
 	Matrix m = Matrix(3, 3, m_);
 
-	Matrix v = Matrix::identity(3);
+	Matrix v;
+	Matrix & vlink = v;
+	vlink = Matrix::identity(3);
 
-	Matrix r = m.dot(v);
+	Matrix r = m.dot(vlink);
 
 	Matrix rv = m;
 

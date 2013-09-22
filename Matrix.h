@@ -8,6 +8,7 @@ public:
 	virtual ~Matrix();
 	static Matrix identity(int m);
 	static Matrix estimate_quaternion(Matrix& A, Matrix& B, Matrix& A2, Matrix& B2);
+	Matrix& copyData(const double * data);
 	Matrix& operator=(const Matrix &rhs);
 	Matrix& operator+=(const Matrix &rhs);
 	Matrix& operator-=(const Matrix &rhs);
@@ -54,5 +55,7 @@ public:
 	bool externalData;
 	bool isTransposed;
 };
+
+
 
 #endif /* MATRIX_H_ */
