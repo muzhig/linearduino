@@ -3,12 +3,13 @@
 
 class Matrix {
 public:
-	Matrix(int m=0, int n=0, double* data=0, bool transposed=false);
+	Matrix(unsigned char m=0, unsigned char n=0, double* data=0, bool transposed=false);
 	Matrix(const Matrix &rhs);
 	virtual ~Matrix();
-	static Matrix identity(int m);
+	static Matrix identity(unsigned char m);
 	static Matrix estimate_quaternion(Matrix& A, Matrix& B, Matrix& A2, Matrix& B2);
 	Matrix& copyData(const double * data);
+	Matrix& copyMatrix(const Matrix& m);
 	Matrix& operator=(const Matrix &rhs);
 	Matrix& operator+=(const Matrix &rhs);
 	Matrix& operator-=(const Matrix &rhs);
@@ -30,12 +31,12 @@ public:
 	Matrix operator-() const;
 	Matrix operator~() const; // inverse
 	Matrix operator*(double scalar) const;
-	Matrix submatrix(int row_top, int col_left, int row_bottom, int col_right) const;
-	double& operator()(int i, int j=0);
+	Matrix submatrix(unsigned char row_top, unsigned char col_left, unsigned char row_bottom, unsigned char col_right) const;
+	double& operator()(unsigned char i, unsigned char j=0);
 
-	const double& get(int i, int j) const;
-	double& set(int i, int j);
-	int index(int i, int j) const;
+	const double& get(unsigned char i, unsigned char j) const;
+	double& set(unsigned char i, unsigned char j);
+	unsigned char index(unsigned char i, unsigned char j) const;
 
 	bool  operator==(const Matrix &other) const;
 	bool  operator!=(const Matrix &other) const;
@@ -50,9 +51,9 @@ public:
 	bool closeEnough(const Matrix& another);
 
 	double* data;
-	int m;
-	int n;
-	bool externalData;
+	unsigned char m;
+	unsigned char n;
+	bool isAllocated;
 	bool isTransposed;
 };
 

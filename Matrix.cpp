@@ -1,71 +1,77 @@
 #include "Matrix.h"
 #include <math.h>
-
-Matrix::Matrix(int m, int n, double* data, bool transposed) {
+//#include <iostream>
+Matrix::Matrix(unsigned char m, unsigned char n, double* data, bool transposed) {
 	this->isTransposed = transposed;
 	this->m = m;
 	this->n = n;
 	this->data = 0;
 	if (data) {
 		this->data = data;
-		externalData = true;
+		isAllocated = false;
 	} else {
 		allocate();
-		for (int i=0; i<m * n; i++) {
+		for (unsigned char i=0; i<m * n; i++) {
 			this->data[i] = 0.0;
 		}
 	}
 }
 
 Matrix::Matrix(const Matrix &rhs) {
-	isTransposed = rhs.isTransposed;
-	m = rhs.m;
-	n = rhs.n;
+	m = 0;
+	n = 0;
 	data = 0;
-	allocate();
-	for (int i=0; i<m * n; i++)
-		data[i] = rhs.data[i];
+	copyMatrix(rhs);
 }
 
 Matrix::~Matrix() {
 	release();
 }
-
-Matrix& Matrix::operator=(const Matrix &rhs) {
-	if (this != &rhs) {
-		if (m * n != rhs.m * rhs.n) {
-			m = rhs.m;
-			n = rhs.n;
+Matrix& Matrix::copyMatrix(const Matrix& another) {
+	if (this != &another) {
+		if (m * n != another.m * another.n) {
+			m = another.m;
+			n = another.n;
 			allocate();
 		}
-		m = rhs.m;
-		n = rhs.n;
-		isTransposed = rhs.isTransposed;
-		for (int i=0; i < m*n; i++)
-			data[i] = rhs.data[i];
+		m = another.m;
+		n = another.n;
+		isTransposed = another.isTransposed;
+		for (unsigned char i = 0; i<m; i++)
+			for (unsigned char j=0; j<n; j++)
+				set(i,j) = another.get(i, j);
 	}
-
 	return *this;
 }
 
+Matrix& Matrix::copyData(const double* data) {
+	for (unsigned char i=0; i<m*n; i++)
+		this->data[i] = data[i];
+	return *this;
+}
+
+Matrix& Matrix::operator=(const Matrix &rhs) {
+	return copyMatrix(rhs);
+}
+
 Matrix& Matrix::operator+=(const Matrix &rhs) {
-	for (int i=0; i<m; i++)
-		for (int j=0; j<n; j++)
+	for (unsigned char i=0; i<m; i++)
+		for (unsigned char j=0; j<n; j++)
 			set(i, j) += rhs.get(i, j);
 	return *this;
 }
 
 Matrix& Matrix::operator-=(const Matrix &rhs) {
-	for (int i=0; i<m; i++)
-		for (int j=0; j<n; j++)
+	for (unsigned char i=0; i<m; i++)
+		for (unsigned char j=0; j<n; j++)
 			set(i, j) -= rhs.get(i, j);
 	return *this;
 }
 
 Matrix& Matrix::multiplySelf(const Matrix &rhs) {
 	// element-wise multiplication with self-modification
-	for (int i=0; i<m; i++)
-		for (int j=0; j<n; j++)
+	for (unsigned char i=0; i<m; i++)
+		for (unsigned char j=0; j<n; j++)
 			set(i, j) *= rhs.get(i, j);
 	return *this;
 }
@@ -84,13 +90,13 @@ Matrix& Matrix::dotSelf(const Matrix &b, bool left){
 			}
 			double* row = new double[a.n];
 
-			for (int i=0; i<a.m; i++) {
-				for (int jj=0; jj<a.n; jj++) {
+			for (unsigned char i=0; i<a.m; i++) {
+				for (unsigned char jj=0; jj<a.n; jj++) {
 					row[jj] = a.get(i, jj);
 					a(i, jj) = 0.0;
 				}
-				for (int j=0; j<( left ? b.m : b.n ); j++)
-					for (int k=0; k < a.n; k++)
+				for (unsigned char j=0; j<( left ? b.m : b.n ); j++)
+					for (unsigned char k=0; k < a.n; k++)
 						a(i, j) += row[k] * ( left ? b.get(j, k) : b.get(k, j));
 			}
 			delete[] row;
@@ -110,9 +116,9 @@ Matrix Matrix::dot(const Matrix &other, bool left) const {
 		return Matrix(0, 0);
 	}
 	Matrix result(left ? n : m, left ? other.m : other.n);
-	for (int i=0; i < (left ? n : m); i++)
-		for (int j=0; j < (left ? other.m : other.n); j++)
-			for (int k=0; k < (left ? m : n); k++)
+	for (unsigned char i=0; i < (left ? n : m); i++)
+		for (unsigned char j=0; j < (left ? other.m : other.n); j++)
+			for (unsigned char k=0; k < (left ? m : n); k++)
 				result(i, j) += (left ? get(k, i) : get(i, k)) * (left ? other.get(j, k) : other.get(k, j));
 	if(left) {
 		result.transpose();
@@ -121,7 +127,7 @@ Matrix Matrix::dot(const Matrix &other, bool left) const {
 }
 
 Matrix& Matrix::operator*=(double scalar){
-	for (int i=0; i<m * n; i++)
+	for (unsigned char i=0; i<m * n; i++)
 		data[i] *= scalar;
 	return *this;
 }
@@ -149,18 +155,18 @@ Matrix Matrix::operator*(double scalar) const {
 	return Matrix(*this) *= scalar;
 }
 
-double& Matrix::operator()(int i, int j){
+double& Matrix::operator()(unsigned char i, unsigned char j){
 	return set(i, j);
 }
 
-const double& Matrix::get(int i, int j) const{
+const double& Matrix::get(unsigned char i, unsigned char j) const{
 	return data[index(i, j)];
 }
 
-double& Matrix::set(int i, int j) {
+double& Matrix::set(unsigned char i, unsigned char j) {
 	return data[index(i, j)];
 }
-int Matrix::index(int i, int j) const{
+unsigned char Matrix::index(unsigned char i, unsigned char j) const{
 	if (isTransposed)
 		return j * m + i;
 	else
@@ -172,8 +178,8 @@ bool  Matrix::operator==(const Matrix &other) const{
 	if (m != other.m || n != other.n)
 		return false;
 
-	for (int i=0; i<m; i++)
-		for (int j=0; j<n; j++)
+	for (unsigned char i=0; i<m; i++)
+		for (unsigned char j=0; j<n; j++)
 			if (get(i, j) != other.get(i,j))
 				return false;
 	return true;
@@ -186,7 +192,7 @@ bool  Matrix::operator!=(const Matrix &other) const{
 
 Matrix& Matrix::transpose() {
 	isTransposed = !isTransposed;
-	int tmp = m; m = n; n=tmp;
+	unsigned char tmp = m; m = n; n=tmp;
 	return *this;
 }
 
@@ -195,9 +201,10 @@ Matrix Matrix::transposed() const { // extremely memory-optimal but be aware- da
 }
 
 Matrix& Matrix::inverse() {
-    int pivrow;     // keeps track of current pivot row
-    int k,i,j;      // k: overall index along diagonal; i: row index; j: col index
-    int* pivrows = new int[n]; // keeps track of rows swaps to undo at end
+	int pivrow;     // keeps track of current pivot row
+	int k;
+	unsigned int i,j;      // k: overall index along diagonal; i: row index; j: col index
+	unsigned int* pivrows = new unsigned int[n]; // keeps track of rows swaps to undo at end
     double tmp;      // used for finding max value and making column swaps
 
     for (k = 0; k < n; k++)
@@ -277,7 +284,7 @@ Matrix& Matrix::inverse() {
 
 double Matrix::trace() const {
 	double result = 0.0;
-	for (int i=0; i<m && i<n; i++) {
+	for (unsigned char i=0; i<m && i<n; i++) {
 		result += get(i, i);
 	}
 	return result;
@@ -379,8 +386,8 @@ Matrix& Matrix::normalize() {
 
 double Matrix::norm() const {
 	double result = 0.0;
-	for (int i=0; i<m; i++)
-		for (int j=0; j<n; j++)
+	for (unsigned char i=0; i<m; i++)
+		for (unsigned char j=0; j<n; j++)
 			result += get(i, j)*get(i, j);
 	result = sqrt(result);
 	return result;
@@ -388,44 +395,45 @@ double Matrix::norm() const {
 
 double Matrix::sum() const {
 	double result = 0.0;
-	for (int i=0; i<m; i++)
-		for (int j=0; j<n; j++)
+	for (unsigned char i=0; i<m; i++)
+		for (unsigned char j=0; j<n; j++)
 			result += get(i, j);
 	return result;
 }
 
-Matrix Matrix::identity(int m) {
+Matrix Matrix::identity(unsigned char m) {
 	Matrix result(m,m);
-	for(int i=0; i<m; i++) {
+	for(unsigned char i=0; i<m; i++) {
 		result(i,i) = 1.0;
 	}
 	return result;
 }
 
 void Matrix::release() {
-	if (data && !externalData) {
+	if (data && isAllocated) {
+//		std::cout << "release: " << m*n << " doubles\n";
 		delete[] data;
 		data = 0;
+		isAllocated = false;
 	}
 }
 void Matrix::allocate() {
-	if (data) {
-		release();
-	}
+	release();
 	if (m && n)
 		this->data = new double[m * n];
 	else
 		this->data = 0;
-	externalData = false;
+	isAllocated = true;
+//	std::cout << "allocate: " << m*n << " doubles\n";
 }
 
-Matrix Matrix::submatrix(int row_top, int col_left, int row_bottom, int col_right) const {
-	int rows = row_bottom-row_top+1;
-	int cols = col_right-col_left+1;
+Matrix Matrix::submatrix(unsigned char row_top, unsigned char col_left, unsigned char row_bottom, unsigned char col_right) const {
+	unsigned char rows = row_bottom-row_top+1;
+	unsigned char cols = col_right-col_left+1;
 	Matrix result(rows, cols);
 
-	for(int i=0;i<rows; i++)
-		for(int j=0; j<cols; j++)
+	for(unsigned char i=0;i<rows; i++)
+		for(unsigned char j=0; j<cols; j++)
 			result(i,j) = get(row_top+i, col_left+j);
 	return result;
 }
@@ -436,9 +444,9 @@ bool Matrix::closeEnough(const Matrix& another) {
 	}
 	bool result = true;
 
-	for (int i=0; result && i<m; i++)
+	for (unsigned char i=0; result && i<m; i++)
 	{
-		for(int j=0; j<n; j++){
+		for(unsigned char j=0; j<n; j++){
 			if (fabs(get(i,j)-another.get(i,j)) > 1.0e-6) {
 				result = false;
 				break;
